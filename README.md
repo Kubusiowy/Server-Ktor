@@ -1,4 +1,4 @@
-[konkurs.sql](https://github.com/user-attachments/files/21978615/konkurs.sql)![linia](https://www.gify.net/data/media/562/linia-ruchomy-obrazek-0184.gif)
+![linia](https://www.gify.net/data/media/562/linia-ruchomy-obrazek-0184.gif)
 # Konkurs-Server-Ktor
 Backend systemu oceniania (ktor + MySql)
 
