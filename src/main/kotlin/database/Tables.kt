@@ -19,8 +19,8 @@ object Schools: Table("schools") {
     override val primaryKey = PrimaryKey(schoolId)
 }
 // 3/7
-object Jury: Table("jury"){
-    val juryId = integer("jury_id").autoIncrement()
+object Jury: Table("jurors"){
+    val juryId = integer("juror_id").autoIncrement()
     val firstName = varchar("first_name", 255)
     val lastName = varchar("last_name", 255)
     override val primaryKey = PrimaryKey(juryId)

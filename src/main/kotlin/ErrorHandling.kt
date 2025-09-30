@@ -4,9 +4,6 @@ package com.firek
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
-import io.ktor.http.*
-import io.ktor.serialization.*            // SerializationException
-import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.*
 import kotlinx.serialization.Serializable
@@ -21,7 +18,6 @@ data class ErrorResponse(
 
 class ValidationException(msg: String) : RuntimeException(msg)
 
-class UnauthorizedException(msg: String) : RuntimeException(msg)
 
 fun Application.configureErrorHandling() {
     install(StatusPages) {
@@ -39,19 +35,12 @@ fun Application.configureErrorHandling() {
             )
         }
 
-        exception<UnauthorizedException> { call, _ ->
-            call.respond(
-                HttpStatusCode.Unauthorized,
-                ErrorResponse(401, "Unauthorized"))
-        }
 
         status(HttpStatusCode.NotFound){call, _ ->
             call.respond(
                 HttpStatusCode.NotFound,
                 ErrorResponse(404, "Not found")
             )
-
-
         }
 
         exception<Throwable> { call, _ ->
