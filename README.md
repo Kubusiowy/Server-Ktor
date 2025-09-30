@@ -1,6 +1,6 @@
 
 ![linia](https://www.gify.net/data/media/562/linia-ruchomy-obrazek-0184.gif)
-# Konkurs-Server-Ktor
+# Server-Ktor
 Backend systemu oceniania (ktor + MySql)
 
 ## Struktura bazy (MYSQL)
