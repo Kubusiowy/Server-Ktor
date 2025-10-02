@@ -16,6 +16,13 @@ data class ErrorResponse(
     val details:String? = null
 )
 
+@Serializable
+data class GoodResponse(
+    val code: Int,
+    val message: String,
+    val details: String? = null
+)
+
 class ValidationException(msg: String) : RuntimeException(msg)
 
 

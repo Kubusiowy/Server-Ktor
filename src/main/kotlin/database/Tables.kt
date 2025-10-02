@@ -14,7 +14,7 @@ object Admin: Table("admin") {
 // 2/7
 object Schools: Table("schools") {
     val schoolId = integer("school_id").autoIncrement()
-    val name = varchar("name", 255)
+    val name = varchar("school_name", 255)
     val city = varchar("city", 255)
     override val primaryKey = PrimaryKey(schoolId)
 }

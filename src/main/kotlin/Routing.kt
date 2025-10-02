@@ -39,7 +39,7 @@ fun Application.configureRouting() {
                 get { call.respondText("OK") }
 
                 // uczestnicy 1/6
-                route("/participants"){
+                route("/participants"){ //status OK
                         get {
                             val participants = transaction {
                                 Participants
@@ -49,7 +49,7 @@ fun Application.configureRouting() {
                             call.respond(participants)
                          }
 
-                        get("/{id}") {
+                        get("/{id}") { //status OK
                         val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest,
                             ErrorResponse(404,
                                 "Not found","invalid id parameter"))
@@ -69,6 +69,7 @@ fun Application.configureRouting() {
 
                     post {
                         val body = call.receive<ParticipantRequestDTO>()
+
                                if(body.firstName.isBlank()) throw ValidationException("First name is blank")
                                 if(body.lastName.isBlank()) throw ValidationException("Last name is blank")
 
@@ -77,9 +78,9 @@ fun Application.configureRouting() {
                                     it[firstName] = body.firstName
                                     it[lastName] = body.lastName
                                     it[schoolId] = body.schoolId
-                                }
+                                }get Participants.participantId
                             }
-                            call.respond(HttpStatusCode.Created,newId)
+                            call.respond(HttpStatusCode.Created, GoodResponse(201,"created","id: ${newId}"))
 
                         }
 
@@ -113,8 +114,10 @@ fun Application.configureRouting() {
 
                     post{
                         val juryPost = call.receive<JuryRequestDTO>()
+
                             if(juryPost.firstName.isBlank()) throw ValidationException("First name is blank")
                             if(juryPost.lastName.isBlank()) throw ValidationException("Last name is blank")
+
                         val newId = transaction{
                             Jury.insert {
                                 it[firstName] = juryPost.firstName
@@ -155,7 +158,6 @@ fun Application.configureRouting() {
                     post{
                        val categoriesBody = call.receive<CategoriesRequestDTO>()
 
-                        if(categoriesBody.name.isBlank()) throw ValidationException("First name is blank")
                         val new = transaction{
                             Categories.insert {
                                 it[name] = categoriesBody.name
@@ -209,6 +211,24 @@ fun Application.configureRouting() {
                         }
                         call.respond(HttpStatusCode.Created,new)
                     }
+
+                    delete("/{id}"){
+
+                            val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest,
+                                ErrorResponse(400,"invalid id parameter","id must be an integer"))
+
+                            val DeletedRow = transaction{
+                                Categories
+                                    .deleteWhere { Categories.categoryId eq id }
+                            }
+
+                            if(DeletedRow == 0){
+                                call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"no category found"))
+                            }else{
+                                call.respond(HttpStatusCode.NoContent)
+                            }
+
+                    }
                 }
             // 5/6
 
@@ -228,14 +248,30 @@ fun Application.configureRouting() {
                     if(SchoolBody.name.isBlank()) throw ValidationException("name is blank")
                     if(SchoolBody.city.isBlank()) throw ValidationException("city is blank")
 
-                    val School = transaction{
+                    val ResultRow = transaction{
                         Schools.insert{
                             it[name] = SchoolBody.name
                             it[city] = SchoolBody.city
                         }
 
                     }
-                    call.respond(HttpStatusCode.Created,School)
+                    call.respond(HttpStatusCode.Created,ResultRow)
+                }
+
+                delete("/{id}"){
+                    val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest,
+                        ErrorResponse(400,"invalid id parameter","id must be an integer"))
+
+                    val DeletedRow = transaction{
+                        Categories
+                            .deleteWhere { Categories.categoryId eq id }
+                    }
+
+                    if(DeletedRow == 0){
+                        call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"no category found"))
+                    }else{
+                        call.respond(HttpStatusCode.NoContent)
+                    }
                 }
             }
 
@@ -246,6 +282,6 @@ fun Application.configureRouting() {
         }
     }
 
-       
+
 
 }

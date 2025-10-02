@@ -27,7 +27,7 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     //status page
-    implementation("io.ktor:ktor-server-status-pages-jvm:${ktor}")
+    implementation("io.ktor:ktor-server-status-pages-jvm:${kotlin_version}")
     implementation("io.ktor:ktor-server-status-pages")
 
     //mysql-connector
@@ -36,5 +36,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:0.52.0")
     implementation("mysql:mysql-connector-java:8.0.33")
 
+    //serialization
+    implementation("io.ktor:ktor-server-content-negotiation:2.+")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.+")
 
 }
