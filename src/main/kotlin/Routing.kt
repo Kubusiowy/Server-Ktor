@@ -8,12 +8,15 @@ import com.firek.database.DTO.CategoriesRequestDTO
 import com.firek.database.DTO.CriteriaRequestDTO
 import com.firek.database.DTO.JuryRequestDTO
 import com.firek.database.DTO.ParticipantRequestDTO
+import com.firek.database.DTO.SchoolRequestDTO
 import com.firek.database.DTO.toCategoriesResponseDTO
 import com.firek.database.DTO.toCriteriaResponseDTO
 import com.firek.database.DTO.toJuryResponseDTO
 import com.firek.database.DTO.toParticipantsResponseDTO
+import com.firek.database.DTO.toSchoolsResponseDTO
 import com.firek.database.Jury
 import com.firek.database.Participants
+import com.firek.database.Schools
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -23,6 +26,8 @@ import io.ktor.server.request.receive
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
@@ -33,7 +38,7 @@ fun Application.configureRouting() {
         route("/api/v1") {
                 get { call.respondText("OK") }
 
-
+                // uczestnicy 1/6
                 route("/participants"){
                         get {
                             val participants = transaction {
@@ -72,14 +77,30 @@ fun Application.configureRouting() {
                                     it[firstName] = body.firstName
                                     it[lastName] = body.lastName
                                     it[schoolId] = body.schoolId
-                                }get Participants.participantId
+                                }
                             }
-                            call.respond(HttpStatusCode.Created,"added participant ID $newId")
+                            call.respond(HttpStatusCode.Created,newId)
 
                         }
 
-                }
+                    delete("/{id}") {
+                        val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest,
+                            ErrorResponse(400,"invalid id parameter","id must be an integer"))
 
+                        val DeletedRow = transaction{
+                            Participants
+                                .deleteWhere { Participants.participantId eq id }
+                        }
+
+                        if(DeletedRow == 0){
+                            call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"no participant found"))
+                        }else{
+                            call.respond(HttpStatusCode.NoContent)
+                        }
+                    }
+
+                }
+                    //jury 2/6
                 route("/jury"){
                     get{
                             val jury = transaction {
@@ -98,13 +119,29 @@ fun Application.configureRouting() {
                             Jury.insert {
                                 it[firstName] = juryPost.firstName
                                 it[lastName] = juryPost.lastName
-                            }get Jury.juryId
+                            }
                         }
 
-                        call.respond(HttpStatusCode.Created,"$newId")
+                        call.respond(HttpStatusCode.Created,newId)
+                    }
+
+                    delete("/{id}") {
+                        val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest,
+                            ErrorResponse(400,"invalid id parameter","id must be an integer"))
+
+                        val DeletedRow = transaction{
+                            Categories
+                                .deleteWhere { Categories.categoryId eq id }
+                        }
+
+                        if(DeletedRow == 0){
+                            call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"no Jury found"))
+                        }else{
+                            call.respond(HttpStatusCode.NoContent)
+                        }
                     }
                 }
-
+                    // 3/6
                 route("/categories"){
                     get{
                         val categories = transaction {
@@ -119,15 +156,31 @@ fun Application.configureRouting() {
                        val categoriesBody = call.receive<CategoriesRequestDTO>()
 
                         if(categoriesBody.name.isBlank()) throw ValidationException("First name is blank")
-                        val newId = transaction{
+                        val new = transaction{
                             Categories.insert {
                                 it[name] = categoriesBody.name
-                            }get Categories.categoryId
+                            }
                         }
-                        call.respond(HttpStatusCode.Created,"$newId")
+                        call.respond(HttpStatusCode.Created,new)
+                    }
+
+                    delete("/{id}"){
+                        val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest,
+                            ErrorResponse(400,"invalid id parameter","id must be an integer"))
+
+                        val DeletedRow = transaction{
+                            Categories
+                                .deleteWhere { Categories.categoryId eq id }
+                        }
+
+                        if(DeletedRow == 0){
+                            call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"no category found"))
+                        }else{
+                            call.respond(HttpStatusCode.NoContent)
+                        }
                     }
                 }
-
+                    // 4/6
                 route("/criteria"){
                     get{
                         val criteria = transaction {
@@ -140,19 +193,54 @@ fun Application.configureRouting() {
 
                     post{
                         val criteriaBody = call.receive<CriteriaRequestDTO>()
+
                         if(criteriaBody.categoryId <= 0) throw ValidationException("Category id is invalid")
-                        val newId = transaction{
+                        if(criteriaBody.name.isBlank()) throw ValidationException("First name is blank")
+                        if(criteriaBody.maxPoints <= 0 ) throw ValidationException("Last name is blank")
+
+                        val new = transaction{
                             Criteria
                             .insert {
                                 it[categoryId] = criteriaBody.categoryId
                                 it[name] = criteriaBody.name
                                 it[maxPoints] = criteriaBody.maxPoints
 
-                            }get Criteria.CriterionId
+                            }
                         }
-                        call.respond(HttpStatusCode.Created,"$newId")
+                        call.respond(HttpStatusCode.Created,new)
                     }
                 }
+            // 5/6
+
+            route("/schools"){
+                get {
+                    val schools = transaction {
+                        Schools
+                            .selectAll()
+                            .map{it.toSchoolsResponseDTO()}
+                    }
+                    call.respond(schools)
+                }
+
+                post{
+                    val SchoolBody = call.receive<SchoolRequestDTO>()
+
+                    if(SchoolBody.name.isBlank()) throw ValidationException("name is blank")
+                    if(SchoolBody.city.isBlank()) throw ValidationException("city is blank")
+
+                    val School = transaction{
+                        Schools.insert{
+                            it[name] = SchoolBody.name
+                            it[city] = SchoolBody.city
+                        }
+
+                    }
+                    call.respond(HttpStatusCode.Created,School)
+                }
+            }
+
+            //6/6
+
 
 
         }

@@ -56,7 +56,7 @@ object Scores : Table("scores") {
     val scoreId       = integer("score_id").autoIncrement()
     val jurorId       = integer("juror_id").references(Jury.juryId)
     val participantId = integer("participant_id").references(Participants.participantId)
-    val criterionId   = integer("criterion_id").references(Criteria.CriterionId)
+    val criteriaId   = integer("criterion_id").references(Criteria.CriterionId)
     val points        = integer("points")
     override val primaryKey = PrimaryKey(scoreId)
 }
