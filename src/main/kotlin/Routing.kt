@@ -51,8 +51,8 @@ fun Application.configureRouting() {
 
                         get("/{id}") { //status OK
                         val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest,
-                            ErrorResponse(404,
-                                "Not found","invalid id parameter"))
+                            ErrorResponse(400,
+                                "invalid id parameter","id must be an INT"))
 
 
                             val row = transaction {
@@ -61,7 +61,7 @@ fun Application.configureRouting() {
                                     .singleOrNull()
                             }
                            if (row == null) {
-                               call.respond(HttpStatusCode.BadRequest,ErrorResponse(404,"not found","participant $id doesn't exists"))
+                               call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"not found","participant $id doesn't exists"))
                            }else{
                                call.respond(row.toParticipantsResponseDTO())
                            }
@@ -70,8 +70,8 @@ fun Application.configureRouting() {
                     post { // status OK
                         val body = call.receive<ParticipantRequestDTO>()
 
-                               if(body.firstName.isBlank()) throw ValidationException("First name is blank")
-                                if(body.lastName.isBlank()) throw ValidationException("Last name is blank")
+                               if(body.firstName.isBlank()) throw ValidationException("Participant First name is blank")
+                                if(body.lastName.isBlank()) throw ValidationException("Participant Last name is blank")
 
                             val newId = transaction{
                                 Participants.insert {
@@ -96,7 +96,7 @@ fun Application.configureRouting() {
                         if(DeletedRow == 0){
                             call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"no participant found"))
                         }else{
-                            call.respond(HttpStatusCode.NoContent,)
+                            call.respond(HttpStatusCode.NoContent)
                         }
                     }
 
