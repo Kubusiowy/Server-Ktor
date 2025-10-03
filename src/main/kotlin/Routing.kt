@@ -10,6 +10,7 @@ import com.firek.database.DTO.CriteriaRequestDTO
 import com.firek.database.DTO.JuryRequestDTO
 import com.firek.database.DTO.ParticipantRequestDTO
 import com.firek.database.DTO.SchoolRequestDTO
+import com.firek.database.DTO.ScoresRequestDTO
 import com.firek.database.DTO.toCategoriesResponseDTO
 import com.firek.database.DTO.toCriteriaResponseDTO
 import com.firek.database.DTO.toJuryResponseDTO
@@ -282,7 +283,7 @@ fun Application.configureRouting() {
             }
 
             //score 6/6
-            route("/score"){
+            route("/scores"){
                 get{
                     val scores = dbQuery{
                         Scores
@@ -293,10 +294,40 @@ fun Application.configureRouting() {
                 }
 
                 post{
+                    val body = call.receive<ScoresRequestDTO>()
+
+                    if(body.jurorId <=0)  throw ValidationException("juror id is invalid")
+                    if(body.participantId <= 0) throw ValidationException("participantId is invalid")
+                    if(body.criteriaId <= 0) throw ValidationException("criteriaId is invalid")
+                    if(body.points <= 0) throw ValidationException("points is invalid")
+
+                    val newId = dbQuery{
+                        Scores.insert {
+                            it[jurorId] = body.jurorId
+                            it[participantId] = body.participantId
+                            it[criteriaId] = body.criteriaId
+                            it[points] = body.points
+                        }get Scores.scoreId
+                    }
+                    call.respond(HttpStatusCode.Created, CreatedResponse(newId))
 
                 }
 
                 delete("/{id}"){
+                        val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest,
+                            ErrorResponse(400,"invalid id parameter","id must be an integer"))
+
+                    val DeletedRows = dbQuery{
+                        Scores.
+                                deleteWhere { Scores.scoreId eq id }
+                    }
+
+                    if(DeletedRows == 0){
+                        call.respond(HttpStatusCode.NotFound,ErrorResponse(404,"no score found"))
+                    }else{
+                        call.respond(HttpStatusCode.NoContent)
+                    }
+
 
                 }
             }
